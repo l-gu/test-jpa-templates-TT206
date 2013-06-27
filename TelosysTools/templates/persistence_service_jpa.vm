@@ -1,0 +1,104 @@
+## ----------------------------------------------------------------------
+## Macros 
+## ----------------------------------------------------------------------
+#macro( argumentsWithType $fields )
+#set ( $count = 0 )
+#set ( $args = "" )
+#foreach( $field in $fields )
+#set ( $count = $count + 1 )
+#if ( $count > 1 )
+#set ( $args = "$args, " )
+#end
+#set ( $args = "${args}${field.type} ${field.name}" )
+#end
+$args #end
+## ----------------------------------------------------------------------
+#macro( arguments $fields )
+#set ( $count = 0 )
+#set ( $args = "" )
+#foreach( $field in $fields )
+#set ( $count = $count + 1 )
+#if ( $count > 1 )
+#set ( $args = "${args}, " )
+#end
+#set ( $args = "${args} ${field.name}" )
+#end
+$args #end
+## ----------------------------------------------------------------------
+#macro( argumentsWithGetters $objName $fields )
+#set ( $count = 0 )
+#set ( $args = "" )
+#foreach( $field in $fields )
+#set ( $count = $count + 1 )
+#if ( $count > 1 )
+#set ( $args = "${args}, " )
+#end
+#set ( $args = "${args} ${objName}.${field.getter}()" )
+#end
+$args #end
+## ----------------------------------------------------------------------
+#if ( $beanClass.hasCompositePrimaryKey() )
+#set( $primaryKeyType = "${beanClass.name}Key" )
+#else 
+#set( $primaryKeyType = $beanClass.keyAttributes[0].wrapperType )
+#end
+## ----------------------------------------------------------------------
+
+package ${target.javaPackageFromFolder($SRC)};
+
+import $beanClass.fullName ;
+#if ( $beanClass.hasCompositePrimaryKey() )
+import ${beanClass.fullName}Key ;
+#end
+import org.demo.persistence.commons.jpa.GenericJpaService;
+import org.demo.persistence.services.${beanClass.name}Persistence;
+
+/**
+ * JPA implementation for basic persistence operations ( entity "${beanClass.name}" )
+ * 
+ * @author Telosys Tools Generator
+ *
+ */
+public class ${beanClass.name}PersistenceJPA extends GenericJpaService<${beanClass.name}, $primaryKeyType> implements ${beanClass.name}Persistence {
+
+	/**
+	 * Constructor
+	 */
+	public ${beanClass.name}PersistenceJPA() {
+		super(${beanClass.name}.class);
+	}
+
+	public ${beanClass.name} load( #argumentsWithType( $beanClass.keyAttributes ) ) {
+#if ( $beanClass.hasCompositePrimaryKey() )
+		// Build the composite key
+		$primaryKeyType key = new $primaryKeyType( #arguments( $beanClass.keyAttributes ) );
+		return super.load( key );
+#else
+		return super.load( #arguments( $beanClass.keyAttributes ) );
+#end	
+	}
+
+	public boolean delete( #argumentsWithType( $beanClass.keyAttributes ) ) {
+#if ( $beanClass.hasCompositePrimaryKey() )
+		// Build the composite key
+		$primaryKeyType key = new $primaryKeyType( #arguments( $beanClass.keyAttributes ) );
+		return super.delete( key );
+#else
+		return super.delete( #arguments( $beanClass.keyAttributes ) );
+#end	
+	}
+
+	public boolean delete(${beanClass.name} entity) {
+		if ( entity != null ) {
+#if ( $beanClass.hasCompositePrimaryKey() )
+			// Build the composite key
+			$primaryKeyType key = new $primaryKeyType( #argumentsWithGetters( "entity", $beanClass.keyAttributes ) );
+			return super.delete( key );
+#else
+			return super.delete( #argumentsWithGetters( "entity", $beanClass.keyAttributes ) );		
+#end	
+		}
+		return false ;
+	}
+
+}

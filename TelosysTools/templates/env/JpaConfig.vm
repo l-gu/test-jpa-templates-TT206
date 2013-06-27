@@ -1,0 +1,17 @@
+package ${target.javaPackageFromFolder($SRC)};
+
+/**
+ * JPA persistence configuration  
+ * 
+ * @author Telosys Tools
+ *
+ */
+public class JpaConfig {
+
+	/**
+	 * Persistence Unit name defined in "persistence.xml" file
+	 */
+	public static final String PERSISTENCE_UNIT_NAME = "derby-bookstore";
+	
+
+}

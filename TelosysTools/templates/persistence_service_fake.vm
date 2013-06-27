@@ -1,0 +1,119 @@
+## ----------------------------------------------------------------------
+## Macros 
+## ----------------------------------------------------------------------
+#macro( argumentsWithType $fields )
+#set ( $count = 0 )
+#set ( $args = "" )
+#foreach( $field in $fields )
+#set ( $count = $count + 1 )
+#if ( $count > 1 )
+#set ( $args = "$args, " )
+#end
+#set ( $args = "${args}${field.type} ${field.name}" )
+#end
+$args #end
+## ----------------------------------------------------------------------
+package ${target.javaPackageFromFolder($SRC)};
+
+import java.util.List;
+import java.util.Map;
+
+import $beanClass.fullName ;
+import org.demo.persistence.commons.fake.GenericFakeService;
+import org.demo.persistence.services.${beanClass.name}Persistence;
+
+/**
+ * Fake persistence service implementation ( entity "${beanClass.name}" )
+ *
+ * @author Telosys Tools Generator
+ */
+public class ${beanClass.name}PersistenceFAKE extends GenericFakeService<${beanClass.name}> implements ${beanClass.name}Persistence {
+
+	public ${beanClass.name}PersistenceFAKE () {
+		super(${beanClass.name}.class);
+	}
+	
+	protected ${beanClass.name} buildEntity(int index) {
+		${beanClass.name} entity = new ${beanClass.name}();
+		// Init fields with mock values
+#foreach( $field in $beanClass.getAttributesByCriteria( $const.NOT_IN_SELECTED_LINKS ) )
+#set ( $type = $field.type.toLowerCase() )
+#if     ( $type == "byte" )
+		entity.${field.setter}( nextByte() ) ;
+#elseif ( $type == "short" )
+		entity.${field.setter}( nextShort() ) ;
+#elseif ( $type == "int" || $type == "integer" )
+		entity.${field.setter}( nextInteger() ) ;
+#elseif ( $type == "long" )
+		entity.${field.setter}( nextLong() ) ;
+#elseif ( $type == "float" )
+		entity.${field.setter}( nextFloat() ) ;
+#elseif ( $type == "double" )
+		entity.${field.setter}( nextDouble() ) ;
+#elseif ( $type == "string" )
+		entity.${field.setter}( nextString() ) ;
+#elseif ( $type == "bigdecimal" )
+		entity.${field.setter}( nextBigDecimal() ) ;
+#elseif ( $type == "boolean" )
+		entity.${field.setter}( false ) ;
+#elseif ( $field.fullType == "java.util.Date" )
+		entity.${field.setter}( nextDate() ) ;
+#elseif ( $field.fullType == "java.sql.Date" )
+		entity.${field.setter}( nextSqlDate() ) ;
+#elseif ( $field.fullType == "java.sql.Time" )
+		entity.${field.setter}( nextSqlTime() ) ;
+#elseif ( $field.fullType == "java.sql.Timestamp" )
+		entity.${field.setter}( nextSqlTimestamp() ) ;
+#elseif ( $field.fullType == "byte[]" )
+		entity.${field.setter}( VOID_BYTES_ARRAY ) ;
+#end
+#end
+		return entity ;
+	}
+	
+	
+	public boolean delete(${beanClass.name} entity) {
+		log("delete ( ${beanClass.name} : " + entity + ")" ) ;
+		return true;
+	}
+
+	public boolean delete( #argumentsWithType( $beanClass.keyAttributes ) ) {
+		log("delete ( PK )") ;
+		return true;
+	}
+
+	public void insert(${beanClass.name} entity) {
+		log("insert ( ${beanClass.name} : " + entity + ")" ) ;
+	}
+
+	public ${beanClass.name} load( #argumentsWithType( $beanClass.keyAttributes ) ) {
+		log("load ( PK )") ;
+		return buildEntity(1) ; 
+	}
+
+	public List<${beanClass.name}> loadAll() {
+		log("loadAll()") ;
+		return buildList(40) ;
+	}
+
+	public List<${beanClass.name}> loadByNamedQuery(String queryName) {
+		log("loadByNamedQuery ( '" + queryName + "' )") ;
+		return buildList(20) ;
+	}
+
+	public List<${beanClass.name}> loadByNamedQuery(String queryName, Map<String, Object> queryParameters) {
+		log("loadByNamedQuery ( '" + queryName + "', parameters )") ;
+		return buildList(10) ;
+	}
+
+	public ${beanClass.name} save(${beanClass.name} entity) {
+		log("insert ( ${beanClass.name} : " + entity + ")" ) ;
+		return entity;
+	}
+
+	public List<${beanClass.name}> search(Map<String, Object> criteria) {
+		log("search (criteria)" ) ;
+		return buildList(15) ;
+	}
+
+}

@@ -1,0 +1,106 @@
+## MAP : key = Java Type, value = MockValues method name 
+#set ( $map = { 
+  "byte"   : "nextByte()",     "java.lang.Byte"    : "nextByte()",  
+  "short"  : "nextShort()",    "java.lang.Short"   : "nextShort()", 
+  "int"    : "nextInteger()",  "java.lang.Integer" : "nextInteger()", 
+  "long"   : "nextLong()",     "java.lang.Long"    : "nextLong()", 
+  "float"  : "nextFloat()",    "java.lang.Float"   : "nextFloat()", 
+  "double" : "nextDouble()",   "java.lang.Double"  : "nextDouble()", 
+  "java.math.BigDecimal" : "nextBigDecimal()", 
+  "java.util.Date"       : "nextDate()", 
+  "java.sql.Date"        : "nextSqlDate()", 
+  "java.sql.Time"        : "nextSqlTime()", 
+  "java.sql.Timestamp"   : "nextSqlTimestamp()"
+} )
+#set( $package = ${target.javaPackageFromFolder($SRC)} )
+## ------------------------------------------------------------------
+#macro( setMethodName $field )
+ #set ( $methodName = "unknown" )
+ #if ( $field.type == "String" ) 
+  #set ( $methodName = "nextString($field.databaseSize)" )
+ #else
+  ## #set ( $exp = "${DOLLAR}map.get(${QUOT}${field.fullType}${QUOT})"  )
+  ## #set ( $methodName = "#evaluate($exp)()" )
+  #set ( $methodName = $map.get( ${field.fullType}) )
+ #end
+#end
+## ------------------------------------------------------------------
+#macro( mockMethod $field )
+#set ( $methodName = "unknown" )
+#if ( $field.type == "String" )
+#set ( $methodName = "nextString($field.databaseSize)" )
+#else
+#set ( $methodName = $map.get(${field.fullType}) )
+#end
+${methodName}#end
+## ------------------------------------------------------------------
+package $package;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import $entity.fullName ;
+import ${package}.tool.MockValues;
+
+public class ${entity.name}Mock {
+
+	private MockValues mockValues = new MockValues();
+	
+	/**
+	 * Creates an instance with random Primary Key
+	 * @return
+	 */
+	public ${entity.name} createInstance() {
+		// Primary Key values
+#*
+		return createInstance( 
+#foreach( $field in $entity.keyAttributes )
+#setMethodName($field )
+#if ( $foreach.count > 1 ),#end
+			mockValues.$methodName
+#end
+			)  ;
+*#
+		return createInstance(#foreach($field in $entity.keyAttributes)#if( $foreach.count > 1 ),#end mockValues.#mockMethod($field)#end );
+	}
+	
+	/**
+	 * Creates an instance with a specific Primary Key
+	 * @param id1
+	 * @return
+	 */
+	public ${entity.name} createInstance( $fn.argumentsListWithType( $entity.keyAttributes ) ) {
+		${entity.name} entity = new ${entity.name}();
+		// Init primary key fields
+#foreach( $field in $entity.keyAttributes )
+		entity.${field.setter}( ${field.name}) ;
+#end
+		// Init other fields
+#foreach( $field in $entity.nonKeyAttributes )
+#if ( $field.type == "String" ) 
+		entity.${field.setter}( mockValues.nextString($field.databaseSize) ) ; // $field.fullType ( max length = $field.databaseSize ) 
+#else
+## #set ( $type = $field.fullType )
+## #set ( $exp = "${DOLLAR}map.get(${QUOT}${field.fullType}${QUOT})"  )
+## ## // exp : $exp
+##		entity.${field.setter}( mockValues.#evaluate($exp) () ) ; // $field.fullType
+#setMethodName( $field )
+		entity.${field.setter}( mockValues.$methodName ) ; // $field.fullType
+#end
+#end
+		return entity ;
+	}
+	
+	/**
+	 * Creates a list of instances
+	 * @param count number of instances to be created
+	 * @return
+	 */
+	public List<${entity.name}> createList(int count) {
+		List<${entity.name}> list = new LinkedList<${entity.name}>();		
+		for ( int i = 1 ; i <= count ; i++ ) {
+			list.add( createInstance() );
+		}
+		return list;
+	}
+}
