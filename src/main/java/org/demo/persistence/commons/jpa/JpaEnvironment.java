@@ -9,8 +9,6 @@ import javax.persistence.PersistenceException;
 /**
  * JPA environment for JPA operations execution
  * 
- * @author Telosys Team
- *
  */
 public class JpaEnvironment {
 

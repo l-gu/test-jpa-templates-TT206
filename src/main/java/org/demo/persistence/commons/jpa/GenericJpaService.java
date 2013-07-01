@@ -20,16 +20,17 @@ import javax.persistence.criteria.Root;
 
 import org.demo.persistence.PersistenceConfig;
 
-
 /**
  * Generic JPA service operations (provided by Telosys Tools)
  * 
- * @param <T>
- * @param <PK>
+ * @param <T>    Entity type
+ * @param <PK>   Primary key type
  */
 @SuppressWarnings("unchecked")
 public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 
+	private static final boolean TRANSACTIONAL = true ;
+	
 	private static final Predicate[] VOID_PREDICATE_ARRAY = {};
 	
 	/**
@@ -46,34 +47,36 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 	}
 
 	
-	private final Object executeWithoutTransaction(JpaOperation operation) throws PersistenceException {
-		JpaEnvironment jpaEnvironment = new JpaEnvironment( PersistenceConfig.JPA_PERSISTENCE_UNIT_NAME );
-		return jpaEnvironment.executeWithoutTransaction(operation) ;
+	private final Object execute(JpaOperation operation) throws PersistenceException {
+		return execute(operation, false) ;
 	}
 
-	private final Object executeWithTransaction(JpaOperation operation) throws PersistenceException {
+	private final Object execute(JpaOperation operation, boolean transactional) throws PersistenceException {
 		JpaEnvironment jpaEnvironment = new JpaEnvironment( PersistenceConfig.JPA_PERSISTENCE_UNIT_NAME );
-		return jpaEnvironment.executeWithTransaction(operation) ;
+		if ( transactional ) {
+			return jpaEnvironment.executeWithTransaction(operation) ;
+		}
+		else {
+			return jpaEnvironment.executeWithoutTransaction(operation) ;
+			
+		}
 	}
 	
-	
 	/**
-	 * Find entity By Id
-	 * @param id
+	 * Find entity by Primary Key
+	 * @param primaryKey
 	 * @return
 	 */
-	public T load(final PK id) {
+	public T load(final PK primaryKey) {
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
 			public Object exectue(EntityManager em) throws PersistenceException {
-				return em.find(persistentClass, id);
+				return em.find(persistentClass, primaryKey);
 			}
 		} ;
 		// JPA operation execution 
-//		JpaEnvironment jpaEnvironment = new JpaEnvironment( PersistenceConfig.JPA_PERSISTENCE_UNIT_NAME );
-//		return jpaEnvironment.executeWithoutTransaction(operation, persistentClass) ;
-		return (T) executeWithoutTransaction(operation) ;
+		return (T) execute(operation) ;
 	}
 
 	/**
@@ -83,10 +86,6 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 	 * @return
 	 */
 	public List<T> loadAll() {
-//		final EntityManager em = getEntityManager();
-//		final Query query = em.createQuery("from " + persistentClass.getName());
-//		return query.getResultList();
-		
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
@@ -96,7 +95,7 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		return (List<T>) executeWithoutTransaction(operation) ;
+		return (List<T>) execute(operation) ;
 	}
 
 	/**
@@ -105,11 +104,6 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 	 * @return
 	 */
 	public List<T> loadByNamedQuery(final String queryName) {
-//		final EntityManager em = getEntityManager();
-//		//final TypedQuery<T> q = em.createQuery(query, this.persistentClass);
-//		final Query query = em.createNamedQuery(queryName);
-//		return query.getResultList();
-
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
@@ -119,7 +113,7 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		return (List<T>) executeWithoutTransaction(operation) ;
+		return (List<T>) execute(operation) ;
 	}
 
 	/**
@@ -129,17 +123,6 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 	 * @return
 	 */
 	public List<T> loadByNamedQuery(final String queryName, final Map<String, Object> queryParameters) {
-//		final EntityManager em = getEntityManager();
-//		final Query query = em.createNamedQuery(queryName);
-//
-//		final Iterator<String> i = queryParameters.keySet().iterator();
-//		while (i.hasNext()) {
-//			String key = i.next();
-//			query.setParameter(key, queryParameters.get(key));
-//		}
-//
-//		return query.getResultList();
-		
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
@@ -154,7 +137,7 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		return (List<T>) executeWithoutTransaction(operation) ;
+		return (List<T>) execute(operation) ;
 	}
 
 	/**
@@ -163,11 +146,6 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 	 * @return
 	 */
 	public void insert(final T entity) {
-//		final EntityManager em = getEntityManager();
-//		em.getTransaction().begin();
-//		em.persist(entity);
-//		em.getTransaction().commit();
-		
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
@@ -177,22 +155,16 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		executeWithTransaction(operation) ;
+		execute(operation, TRANSACTIONAL) ;
 	}
 
 	/**
-	 * Save entity ( TRANSACTIONAL )
+	 * Save the given entity ( TRANSACTIONAL )
 	 * @param <T>
 	 * @param entity
 	 * @return
 	 */
 	public T save(final T entityToSave) {
-//		final EntityManager em = getEntityManager();
-//		em.getTransaction().begin();
-//		T managedEntity = em.merge(entityToSave);
-//		em.getTransaction().commit();
-//		return managedEntity;
-		
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
@@ -202,31 +174,19 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		return (T) executeWithTransaction(operation) ;
+		return (T) execute(operation, TRANSACTIONAL) ;
 	}
 	
 	/**
-	 * Delete entity by pk ( TRANSACTIONAL )
-	 * @param pk
+	 * Delete entity by primary key ( TRANSACTIONAL )
+	 * @param primaryKey
 	 */
-	public boolean delete(final PK pk) {
-//		final EntityManager em = getEntityManager();
-//		final T entity = em.find(this.persistentClass, pk);
-//		if (entity != null) {
-//			em.getTransaction().begin();
-//			em.remove(entity);
-//			em.getTransaction().commit();
-//			return true ;
-//		}
-//		else {
-//			return false ;
-//		}
-
+	public boolean delete(final PK primaryKey) {
 		// JPA operation definition 
 		JpaOperation operation = new JpaOperation() {
 			@Override
 			public Object exectue(EntityManager em) throws PersistenceException {
-				final T entity = em.find(persistentClass, pk);
+				final T entity = em.find(persistentClass, primaryKey);
 				if (entity != null) {
 					em.remove(entity);
 					return Boolean.TRUE ;
@@ -237,10 +197,15 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 			}
 		} ;
 		// JPA operation execution 
-		Boolean b = (Boolean) executeWithTransaction(operation) ;
+		Boolean b = (Boolean) execute(operation, TRANSACTIONAL) ;
 		return b.booleanValue();
 	}
 
+	/**
+	 * Search entities using the given query parameters
+	 * @param queryParameters
+	 * @return
+	 */
 	public List<T> search( final Map<String, Object> queryParameters ) {
 		if ( queryParameters != null  ) {
 			return this.searchWithParameters(queryParameters);
@@ -334,96 +299,9 @@ public abstract class GenericJpaService<T, PK extends java.io.Serializable> {
 				return typedQuery.getResultList();
 			}
 		} ;
+		
 		// JPA operation execution 
-		return (List<T>) executeWithTransaction(operation) ;
+		return (List<T>) execute(operation) ;
 	}
 	
-	/**
-	public List<T> searchOLD( final Map<String, Object> queryParameters ) {
-		System.out.println("=== SEARCH");
-		final EntityManager em = getEntityManager();
-		if ( queryParameters != null  ) {
-			CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
-			CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(persistentClass);
-			Root<T> from = criteriaQuery.from(persistentClass);
-
-			List<Predicate> predicates = new ArrayList<Predicate>();
-
-			for ( Map.Entry<String, Object> e : queryParameters.entrySet() ) {
-				String expression = e.getKey() ;
-				Object value = e.getValue() ;
-				
-				System.out.println("=== Criterion : " + expression + " : " + value );
-				
-				if ( value != null ) {
-					boolean operatorFound = false ;
-					int i = expression.indexOf(' ') ;
-					if ( i >= 0 ) {
-						String name = expression.substring(0, i);
-						String oper = expression.substring(i, expression.length()).trim();
-						System.out.println("name = '" + name + "'   oper = '" + oper + "'  value = '" + value + "'" );
-						if ( oper.length() > 0 ) {
-							operatorFound = true ;
-							if ( value instanceof String ) {
-								String strValue = (String) value ;
-								if ( "=".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.equal( from.get(name), strValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( "like".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.like( from.<String>get(name), strValue ) ;
-									predicates.add(p) ;
-								}
-								else {
-									throw new RuntimeException("Search : invalid operator '" + oper +"' for String attribute") ;
-								}
-							}
-							else if ( value instanceof Number ) {
-								Number numValue = (Number) value ;
-								if ( "=".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.equal( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( "!=".equalsIgnoreCase(oper) || "<>".equalsIgnoreCase(oper)) {
-									Predicate p = criteriaBuilder.notEqual( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( ">".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.gt( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( "<".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.lt( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( ">=".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.ge( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else if ( "<=".equalsIgnoreCase(oper) ) {
-									Predicate p = criteriaBuilder.le( from.<Number>get(name), numValue ) ;
-									predicates.add(p) ;
-								}
-								else {
-									throw new RuntimeException("Search : invalid operator '" + oper +"' for Number attribute") ;
-								}
-							}
-						}
-					}
-					if ( ! operatorFound ) {
-						predicates.add( criteriaBuilder.equal( from.get(expression), value ) ) ;
-					}
-				}
-			}
-			
-			criteriaQuery.where( predicates.toArray(VOID_PREDICATE_ARRAY) );
-			
-			TypedQuery<T> typedQuery = em.createQuery(criteriaQuery);
-			return typedQuery.getResultList();
-		}
-		else {
-			return this.loadAll();
-		}
-	}
-	**/
 }
