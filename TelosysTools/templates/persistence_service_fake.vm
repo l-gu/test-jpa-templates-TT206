@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import $entity.fullName ;
-import org.demo.persistence.commons.fake.GenericFakeService;
-import org.demo.persistence.services.${entity.name}Persistence;
+import ${ROOT_PKG}.persistence.commons.fake.GenericFakeService;
+import ${ROOT_PKG}.persistence.services.${entity.name}Persistence;
 
 /**
  * Fake persistence service implementation ( entity "${entity.name}" )
